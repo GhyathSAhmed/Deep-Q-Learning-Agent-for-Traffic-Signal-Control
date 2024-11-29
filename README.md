@@ -11,7 +11,8 @@ These instructions will get you a copy of the project up and running on your loc
 1. Download Anaconda ([official site](https://www.anaconda.com/distribution/#download-section)) and install.
 2. Download SUMO ([official site](https://www.dlr.de/ts/en/desktopdefault.aspx/tabid-9883/16931_read-41000/)) and install.
 3. Follow [this](https://towardsdatascience.com/tensorflow-gpu-installation-made-easy-use-conda-instead-of-pip-52e5249374bc) short guide to install tensorflow-gpu correctly and problem-free. In short, the guide tells you to open Anaconda Prompt, or any terminal, and type the following commands:
-```
+
+```bash
 conda create --name tf_gpu
 activate tf_gpu
 conda install tensorflow-gpu
@@ -23,7 +24,8 @@ I've used the following software versions: Python 3.7, SUMO traffic simulator 1.
 
 1. Clone or download the repo.
 2. Using the Anaconda prompt or any other terminal, navigate to the root folder and run the file **training_main.py** by executing:
-```
+
+```bash
 python training_main.py
 ```
 
@@ -41,9 +43,10 @@ Now you can finally test the trained agent. To do so, you have to run the file *
 
 ## The code structure
 
-The main file is **training_main.py**. It handles the main loop that starts an episode on every iteration. It also saves the network weights and three plots: negative reward, cumulative wait time, and average queues. 
+The main file is **training_main.py**. It handles the main loop that starts an episode on every iteration. It also saves the network weights and three plots: negative reward, cumulative wait time, and average queues.
 
 Overall the algorithm is divided into classes that handle different parts of the training.
+
 - The **Model** class defines everything about the deep neural network, and it also contains some functions used to train the network and predict the outputs. In the **model.py** file, two different **model** classes are defined: one used only during the training and only during the testing.
 - The **Memory** class handle the memorization for the experience replay mechanism. A function adds a sample into the memory, while another function retrieves a batch of samples from the memory.
 - The **Simulation** class handles the simulation. In particular, the function *run* allows the simulation of one episode. Also, other functions are used during *run* to interact with SUMO, for example: retrieving the state of the environment (*get_state*), set the next green light phase (*_set_green_phase*) or preprocess the data to train the neural network (*_replay*). Two files contain a slightly different **Simulation** class: **training_simulation.py** and **testing_simulation.py**. Which one is loaded depends if we are doing the training phase or the testing phase.
@@ -56,6 +59,7 @@ In the "intersection" folder, there is a file called *environment.net.xml*, whic
 ## The settings explained
 
 The settings used during the training and contained in the file **training_settings.ini** are the following:
+
 - **gui**: enable or disable the SUMO interface during the simulation.
 - **total_episodes**: the number of episodes that are going to be run.
 - **max_steps**: the duration of each episode, with 1 step = 1 second (default duration in SUMO).
@@ -76,6 +80,7 @@ The settings used during the training and contained in the file **training_setti
 - **sumocfg_file_name**: the name of the .sumocfg file inside the *intersection* folder.
 
 The settings used during the testing and contained in the file **testing_settings.ini** are the following (some of them have to be the same as the ones used in the relative training):
+
 - **gui**: enable or disable the SUMO interface during the simulation.
 - **max_steps**: the duration of the episode, with 1 step = 1 second (default duration in SUMO).
 - **n_cars_generated**: the number of cars generated during the test episode.
@@ -86,7 +91,7 @@ The settings used during the testing and contained in the file **testing_setting
 - **num_actions**: the number of possible actions (same as training).
 - **models_path_name**: The name of the folder where to search for the specified model version to load.
 - **sumocfg_file_name**: the name of the .sumocfg file inside the *intersection* folder.
-- **model_to_test**: the version of the model to load for the test. 
+- **model_to_test**: the version of the model to load for the test.
 
 ## The Deep Q-Learning Agent
 
@@ -99,16 +104,17 @@ The settings used during the testing and contained in the file **testing_setting
 **Traffic generation**: For every episode, 1000 cars are created. The car arrival timing is defined according to a Weibull distribution with shape 2 (a rapid increase of arrival until the mid-episode, then slow decreasing). 75% of vehicles spawned will go straight, 25% will turn left or right. Every vehicle has the same probability of being spawned at the beginning of every arm. In every episode, the cars are randomly generated, so it is impossible to have two equivalent episodes regarding the vehicle's arrival layout.
 
 **Agent ( Traffic Signal Control System - TLCS)**:
+
 - **State**: discretization of oncoming lanes into presence cells, which identify the presence or absence of at least 1 vehicle inside them. There are 20 cells per arm. 10 of them are placed along the left-most lane while the other 10 are placed in the other three lanes. 80 cells in the whole intersection.
 - **Action**: choice of the traffic light phase from 4 possible predetermined phases, described below. Every phase has a duration of 10 seconds. When the phase changes, a yellow phase of 4 seconds is activated.
   - North-South Advance: green for lanes in the north and south arm dedicated to turning right or going straight.
-  - North-South Left Advance: green for lanes in the north and south arm dedicated to turning left. 
+  - North-South Left Advance: green for lanes in the north and south arm dedicated to turning left.
   - East-West Advance: green for lanes in the east and west arm dedicated to turning right or going straight.
-  - East-West Left Advance: green for lanes in the east and west arm dedicated to turning left. 
+  - East-West Left Advance: green for lanes in the east and west arm dedicated to turning left.
 - **Reward**: change in *cumulative waiting time* between actions, where the waiting time of a car is the number of seconds spent with speed=0 since the spawn; *cumulative* means that every waiting time of every car located in an incoming lane is summed. When a car leaves an oncoming lane (i.e. crossed the intersection), its waiting time is no longer counted. Therefore this translates to a positive reward for the agent.
 - **Learning mechanism**: the agent make use of the Q-learning equation *Q(s,a) = reward + gamma • max Q'(s',a')* to update the action values and a deep neural network to learn the state-action function. The neural network is fully connected with 80 neurons as input (the state), 5 hidden layers of 400 neurons each, and the output layers with 4 neurons representing the 4 possible actions. Also, an experience replay mechanism is implemented: the experience of the agent is stored in a memory and, at the end of each episode, multiple batches of randomized samples are extracted from the memory and used to train the neural network, once the action values have been updated with the Q-learning equation.
 
-## *Changelog - New version, updated on 12 Jan 2020*
+## *Changlog*
 
 - *Each training result is now stored in a folder structure, with each result being numbered with an increasing integer.*
 - *New Test Mode: test the model versions you created by running a test episode with comparable results.*
@@ -119,22 +125,10 @@ The settings used during the testing and contained in the file **testing_setting
 - *Added a minimum number of samples required into the memory to begin training.*
 - *Improved code readability.*
 
-## Author
+## Credit
 
-* **Andrea Vidali** - *University of Milano-Bicocca*
-
-If you need further information about the algorithm, I suggest you open an issue on the issues page.
+**Andrea Vidali** - *University of Milano-Bicocca*
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Buy me a coffee!
-
-Hi 👋 My name is Andrea.
-
-If this repo helped you in some way and you want to say thanks, consider buying me a coffee!
-
-<a href="https://www.buymeacoffee.com/andreavidali" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
- 
-
